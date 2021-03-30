@@ -23,6 +23,8 @@ The output of the code, which can be obtained by executing "runner.R", is a set 
 1. monthly temperature metrics are included here
 2. all models are for the mean response only (no quantile regression is used)
 
+If you want to model other temperature metrics, you can add them to the "T\_custom\_metrics" function in the "002 - set up temperature.R" script.
+
 Reference:
 
 Christopher Wolf, David M. Bell, Hankyu Kim, Michael Paul Nelson, Mark Schulze, and Matthew G. Betts. Temporal consistency of undercanopy thermal refugia in old-growth forest. *Agricultural and Forest Meteorology*, In Review.
