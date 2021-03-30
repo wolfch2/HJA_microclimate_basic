@@ -2,12 +2,14 @@
 
 Code for microclimate temperature modeling in the HJ Andrews forest. Before running the code, you should set up your directory structure as follows:
 
+```
 your project directory
 └── data
-│    └── data\_input
+│    └── data_input
 └── scripts
+```
 
-Where the R scripts in this repository should be placed in the "scripts" folder and the following datasets should be placed in the "data_input" folder:
+Where the R scripts in this repository should be placed in the "scripts" folder and the following datasets should be placed in the "data\_input" folder:
 (1) HJA variables\_final.xlsx [available in this repository]
 (2) site\_locations.xlsx [available in this repository]
 (3) temperature\_cleaned [folder with temperature data csv's]
