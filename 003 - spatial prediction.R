@@ -7,6 +7,9 @@ rast_spread = spread(rast_reduce[,c("site","var_scale","value"),],key="var_scale
 
 temp_merged = readRDS("data_processed/temperature_metrics.RDS")
 temp_merged$site_year = paste(temp_merged$LOCATION_CODE, temp_merged$Year)
+if(years != "All"){
+        temp_merged = temp_merged[temp_merged$Year %in% years,]
+}
 
 data = merge(temp_merged, rast_spread, by="site")
 

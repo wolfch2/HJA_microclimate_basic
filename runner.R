@@ -31,6 +31,7 @@ pacman::p_load(cowplot,
 p_load_gh("hunzikp/velox")
 
 setwd("/mnt/shared/analysis/Andrews_simpleGBM/") # set to project directory
+years = "All" # can change to year(s) -- for example, "2013" or "c(2013, 2017)" or "2013:2015"
 
 dir.create("data_processed")
 dir.create("output")

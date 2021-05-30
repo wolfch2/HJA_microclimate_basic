@@ -16,7 +16,7 @@ Where the R scripts in this repository should be placed in the "scripts" folder 
 4. rasters listed in "HJA variables\_final.xlsx" [see HJA data webpage]
 5. harvest, hjaveg8, shapefiles [for PC1/PC2 only; see HJA data webpage, I think]
 
-Before running the code, you will need to set the project directory in "runner.R".
+Before running the code, you will need to set the project directory in "runner.R". To obtain predictions for specific year(s), you can change the "years" variable in this script. Note that memory use peaks at ~29GB (I think).
 
 The output of the code, which can be obtained by executing "runner.R", is a set of predicted temperature rasters (with a paneled figure) corresponding to the temperature metrics in Wolf et al. (2021), Frey et al. (2016), and mean min/mean/max daily temperature for each month. All relevant methods (e.g., raster processing) are described in Wolf et al. (2021) with two differences:
 
