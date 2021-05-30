@@ -35,11 +35,9 @@ N_CORE_SMALL = 6 # number of cores for memmory intensive tasks
 
 setwd("/home/chrisgraywolf/shared/analysis/Andrews_simpleGBM/") # set to project directory
 
-set.tempdir("temp")
-setPaths(cachePath="temp", inputPath="temp", modulePath="temp", outputPath="temp", silent = FALSE)
-
 dir.create("data_processed")
 dir.create("output")
+dir.create("temp")
 
 registerDoMC(N_CORE_LARGE)
 

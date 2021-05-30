@@ -65,7 +65,9 @@ map_theme = theme(axis.ticks=element_blank(),
                       legend.key.width=unit(0.6,"lines"),
                       legend.background=element_rect(fill=NA)) 
 
-plot_ord = c(names(pred_rast_stack)[1:6], paste0("m_",1:12,"_min"), paste0("m_",1:12,"_mean"), paste0("m_",1:12,"_max"))
+plot_ord = c(names(pred_rast_stack)[c(1,2,3,7,8,9)],
+             paste0("m_",1:12,"_min"), paste0("m_",1:12,"_mean"), paste0("m_",1:12,"_max"),
+             names(pred_rast_stack)[c(4,5,6,46:52)])
 
 plot_list = lapply(plot_ord, function(var){
         print(var)
