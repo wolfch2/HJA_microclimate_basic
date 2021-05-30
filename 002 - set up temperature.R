@@ -51,13 +51,6 @@ monthly_summaries = function(sitedata, summary="MinT"){
         tapply(sitedata[,summary], sitedata$Month, mean)
 }
 
-#month_level = function(sitedata, start_month, end_month, variable){
-#        sitedata_sel = sitedata[sitedata$Month %in% start_month:end_month,]
-#        if(nrow(sitedata_sel) != sum(monthdays(start_month:end_month, sitedata$Year[1]))) return(NA)
-#        out = sd(tapply(sitedata_sel[,variable], sitedata_sel$Month, mean))
-#        return(out)
-#}
-
 # sitedata contains daily temperature summaries for a given site and year
 # (SiteInfo, Date, MaxT, MinT, MeanT)
 T_custom_metrics = function(sitedata, prop_obs = 0.8){ # see StreamThermal package for input format
@@ -117,7 +110,7 @@ temperature$Date = ymd(temperature$Date)
 ############################## compute annual metrics
 
 temp_split = split(temperature,paste(temperature$Year,temperature$LOCATION_CODE))
-temperature_metrics = foreach(i=1:length(temp_split)) %dopar% {
+temperature_metrics = foreach(i=1:length(temp_split)) %do% {
         print(i)
         df = temp_split[[i]]
         sitedata_micro = data.frame(SiteInfo=df$LOCATION_CODE,

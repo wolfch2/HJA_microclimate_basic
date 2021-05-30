@@ -23,8 +23,7 @@ res_1_agg = stack(foreach(i=which(rast_df$Resolution_m == 1 & rast_df$Group == "
                           return(out)
 })
 
-# 51 sec on desktop, 149 sec on cluster
-res_5 = stack(foreach(i=which(rast_df$Resolution_m == 5 & rast_df$Group == "Vegetation"), .packages=c("raster")) %dopar% {
+res_5 = stack(foreach(i=which(rast_df$Resolution_m == 5 & rast_df$Group == "Vegetation"), .packages=c("raster")) %do% {
                       print(i)
                       rast = raster(rast_df$Path[i]) # some (e.g. mean_height) have bad pixels near edges.. buffer NA inward to be safe.
                       drop = rast_df$Drop_cells[i]
@@ -203,7 +202,7 @@ dir.create("data_processed/microtopography/")
 scales = c(10, 25, 50, 100, 250, 500)
 
 # https://stackoverflow.com/questions/30904740/issue-using-saverds-with-raster-objects
-foreach(scale=scales, .packages=c("raster")) %dopar% {
+foreach(scale=scales, .packages=c("raster")) %do% {
         print(scale)        
         elev_agg = aggregate(elev_5, fact=scale/5)
 
@@ -242,7 +241,7 @@ smoothed_stack = stack(lapply(names(rast_stack), function(rast_name){
                                       # best when num. tiles is a small multiple of num. cores                                      
                                       rast_split = splitRaster(rast_stack[[rast_name]], 4, 6, buffer=c(max(scales)/5,max(scales)/5))
                                       smoothed_rast_split = foreach(rast_small=rast_split, .packages=c("velox","raster"),
-                                                                    .export=c("wt_list","scales")) %dopar% {
+                                                                    .export=c("wt_list","scales")) %do% {
                                               rast_small_not_NA = rast_small
                                               rast_small_not_NA[] = 1 - is.na(rast_small[])
                                               rast_small[is.na(rast_small[])] = 0 
@@ -262,7 +261,7 @@ smoothed_stack = stack(lapply(names(rast_stack), function(rast_name){
                                               return(out)
                                       }
                                       smoothed_rast_split = purrr::transpose(smoothed_rast_split)
-                                      out = stack(foreach(rast_list=smoothed_rast_split, .packages=c("raster", "SpaDES")) %dopar% {
+                                      out = stack(foreach(rast_list=smoothed_rast_split, .packages=c("raster", "SpaDES")) %do% {
                                                           out = mergeRaster(rast_list)
                                                           return(out)
                                                                     })
@@ -338,8 +337,7 @@ veg_rasts_all = stack(veg_rasts,PC1,PC2) # alternatively, could use smoothed ver
 
 sites_buffer = st_buffer(sites_UTM_spatial, 500) # for cropping
 
-registerDoMC(N_CORE_SMALL)
-rast_reduce = foreach(i = 1:nrow(sites_buffer), .combine="rbind") %dopar% {
+rast_reduce = foreach(i = 1:nrow(sites_buffer), .combine="rbind") %do% {
         print(i)
         # veg reduce        
         rast_crop_5 = crop(veg_rasts_all, sites_buffer[i,])
@@ -362,7 +360,6 @@ rast_reduce = foreach(i = 1:nrow(sites_buffer), .combine="rbind") %dopar% {
         out = na.omit(rbind(out_veg, out_topo))
         return(out)
 }
-registerDoMC(N_CORE_LARGE)
 
 rast_reduce$scale = as.numeric(rast_reduce$scale)
 
@@ -406,4 +403,3 @@ p = ggplot(veg_cor, aes(x=format_names(Var1),y=format_names(Var2),fill=value)) +
 png("output/veg_PC/veg_cor.png", width=7, height=7, units="in", res=400)
 print(p)
 dev.off()
-

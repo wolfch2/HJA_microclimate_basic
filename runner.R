@@ -1,45 +1,40 @@
-require(cowplot)
-require(data.table)
-require(doMC)
-require(doSNOW)
-require(dynatopmodel)
-require(foreach)
-require(ggplot2)
-require(grid)
-require(gridExtra)
-require(lightgbm)
-require(lubridate)
-require(MASS)
-require(pbapply)
-require(plyr)
-require(png)
-require(purrr)
-require(raster)
-require(RColorBrewer)
-require(readxl)
-require(reshape2)
-require(rgdal)
-require(scales)
-require(sf)
-require(sp)
-require(stringr)
-require(stringi)
-require(tidyr)
-require(tidyverse)
-require(vegan)
-require(velox) # devtools::install_github("hunzikp/velox")
-require(R.devices) # https://www.jottr.org/2018/07/21/suppressgraphics/
+if (!require("pacman")) install.packages("pacman")
 
-N_CORE_LARGE = 24 # max. number of cores to use
-N_CORE_SMALL = 6 # number of cores for memmory intensive tasks
+pacman::p_load(cowplot,
+               data.table,
+               dynatopmodel,
+               foreach,
+               ggplot2,
+               grid,
+               gridExtra,
+               lightgbm,
+               lubridate,
+               MASS,
+               pbapply,
+               plyr,
+               purrr,
+               raster,
+               RColorBrewer,
+               readxl,
+               reshape2,
+               rgdal,
+               scales,
+               sf,
+               sp,
+               stringr,
+               stringi,
+               tidyr,
+               tidyverse,
+               vegan,
+               R.devices)
 
-setwd("/home/chrisgraywolf/shared/analysis/Andrews_simpleGBM/") # set to project directory
+p_load_gh("hunzikp/velox")
+
+setwd("/mnt/shared/analysis/Andrews_simpleGBM/") # set to project directory
 
 dir.create("data_processed")
 dir.create("output")
 dir.create("temp")
-
-registerDoMC(N_CORE_LARGE)
 
 start = Sys.time()
 source("scripts/utility_functions.R")
