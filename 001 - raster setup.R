@@ -2,14 +2,12 @@ rast_df = data.frame(read_excel("data_input/HJA variables_final.xlsx", na="NA"))
 
 ######################################## set up elevation raster (buffer inward 30/5=6 pixels) and prediction mask
 
-# the 5-m rasters need to be aligned - cleanest to use aggregated extent of a 1-m raster, I think
-# (so we can disaggregate to 1-m later, if needed)
+# the rasters need to be aligned - we can use elev for this
 elev = raster(rast_df$Path[rast_df$Variable == "Elevation"])
 
-elev_5 = aggregate(elev, fact=5)
-elev_5 = buffer_inward(elev_5, rast_df$Drop_cells[rast_df$Variable == "Elevation"])
+elev_25 = aggregate(elev, fact=25) %>% buffer_inward(2)
 
-pred_mask = elev_5
+pred_mask = elev_25 %>% buffer_inward(2)
 pred_mask[] = ! is.na(pred_mask[])
 
 saveRDS(pred_mask, "data_processed/pred_mask.RDS")
@@ -17,27 +15,28 @@ saveRDS(pred_mask, "data_processed/pred_mask.RDS")
 ######################################## clean up and resample vegetation rasters
 
 res_1_agg = stack(foreach(i=which(rast_df$Resolution_m == 1 & rast_df$Group == "Vegetation"), .packages=c("raster")) %do% {
+                          print(i)
                           out = raster(rast_df$Path[i])
-                          out = projectRaster(out, elev_5, method="ngb")        
+                          out = projectRaster(out, elev_25, method="ngb")        
                           names(out) = rast_df$Variable[i]
                           return(out)
 })
 
-res_5 = stack(foreach(i=which(rast_df$Resolution_m == 5 & rast_df$Group == "Vegetation"), .packages=c("raster")) %do% {
+res_25 = stack(foreach(i=which(rast_df$Resolution_m == 5 & rast_df$Group == "Vegetation"), .packages=c("raster")) %do% {
                       print(i)
-                      rast = raster(rast_df$Path[i]) # some (e.g. mean_height) have bad pixels near edges.. buffer NA inward to be safe.
+                      rast = raster(rast_df$Path[i]) # some (e.g. mean_height) have bad pixels near edges.. buffer NA inward to be safe.                 
+                      out = projectRaster(rast, elev_25, method="ngb")
                       drop = rast_df$Drop_cells[i]
                       if(drop > 0){
-                              rast = buffer_inward(rast, drop)
-                      }
-                      out = projectRaster(rast, elev_5, method="ngb")
+                              out = buffer_inward(out, ceiling(drop/5))
+                      }                           
                       names(out) = rast_df$Variable[i]
                       return(out)
 })
 
 ######################################## PC analysis
 
-veg_rasts = stack(res_1_agg, res_5) # input veg rasters
+veg_rasts = stack(res_1_agg, res_25) # input veg rasters
 predictor_mat = as.matrix(veg_rasts)
 
 df = data.frame(predictor_mat, row_num = 1:nrow(predictor_mat))
@@ -64,7 +63,7 @@ PC_rasts = pblapply(1:ncol(PCA_mat), function(i){
 
 sites = data.frame(read_excel("data_input/site_locations.xlsx"))
 sites$LOCATION_CODE = sites$POINT
-sites_UTM_spatial = st_as_sf(sites, coords=c("X","Y"),crs=st_crs(projection(elev_5)))
+sites_UTM_spatial = st_as_sf(sites, coords=c("X","Y"),crs=st_crs(projection(elev_25)))
 
 PC1 = PC_rasts[[1]]
 sites$PC1 = raster::extract(PC1, sites_UTM_spatial, buffer=25, fun=mean)
@@ -82,7 +81,7 @@ sites$plantation = factor(sites$Plantation,
 
 stand_year = read_sf("data_input/stand_age/hjaveg8.shp")
 sites$year = stand_year$YR_ORIGIN[as.numeric(st_intersects(
-        st_as_sf(sites, coords=c("X","Y"),crs=st_crs(projection(elev_5))), 
+        st_as_sf(sites, coords=c("X","Y"),crs=st_crs(projection(elev_25))) %>% st_transform(26910), 
         stand_year))]
 sites$year[sites$year == 0] = NA 
 
@@ -92,9 +91,9 @@ p1 = ggplot(sites, aes(x=rescale(PC1), y=rescale(PC2), color=plantation, alpha=y
         geom_density_2d(alpha=0.35, show.legend=FALSE) +
         scale_color_manual(values=brewer.pal(3,"Set1")[3:2],
                            guide=guide_legend(title=NULL, order=1)) +
-theme_bw() +
-expand_limits(y=-0.17) +
-theme(axis.text=element_text(color="black"),
+        theme_bw() +
+        expand_limits(y=-0.17) +
+        theme(axis.text=element_text(color="black"),
       axis.ticks=element_line(color="black"),
       panel.border=element_rect(color="black"),
       legend.position=c(0,0),
@@ -105,8 +104,8 @@ theme(axis.text=element_text(color="black"),
       legend.box="vertical",
       legend.direction="horizontal",
       legend.background=element_rect(color="black")) +
-xlab("Principal component 1") +
-ylab("Principal component 2")
+        xlab("Principal component 1") +
+        ylab("Principal component 2")
 
 loading_df = data.frame(PCA$rotation)
 loading_df$var_name = rownames(loading_df)
@@ -199,12 +198,12 @@ dev.off()
 
 dir.create("data_processed/microtopography/")
 
-scales = c(10, 25, 50, 100, 250, 500)
+scales = c(25, 250)
 
 # https://stackoverflow.com/questions/30904740/issue-using-saverds-with-raster-objects
 foreach(scale=scales, .packages=c("raster")) %do% {
         print(scale)        
-        elev_agg = aggregate(elev_5, fact=scale/5)
+        elev_agg = aggregate(elev_25, fact=scale/25)
 
         aspect = terrain(elev_agg, opt='aspect')
         slope = terrain(elev_agg, opt='slope')
@@ -217,17 +216,16 @@ foreach(scale=scales, .packages=c("raster")) %do% {
                                 Position_index=TPI,
                                 Convergence_index=upslope[["atb"]]))
 
-        out = resample(rast_stack, elev_5)
-        saveRDS(readAll(out), paste0("data_processed/microtopography/", scale))
+        out = resample(rast_stack, elev_25)
+        saveRDS(out, paste0("data_processed/microtopography/", scale))
 }
 
 ######################################## smooth vegetation rasters
 
 rast_stack = stack(veg_rasts, PC1, PC2)
 
-scales = seq(10,100,by=10)
 wt_list = lapply(scales, function(scale){
-                         wt  = raster:::.circular.weight(raster(vals=1), scale/5)
+                         wt  = raster:::.circular.weight(raster(vals=1), scale/25 - 0.001)
                          wt[wt > 0] = 1 # velox multiplies by weight matrix (elementwise) and sums
                          return(wt)
       })                
@@ -235,54 +233,43 @@ names(wt_list) = as.character(scales)
 
 dir.create("data_processed/rasters/")
 smoothed_stack = stack(lapply(names(rast_stack), function(rast_name){                                      
-                                      print(rast_name)
-                                      if(file.exists(paste0("data_processed/rasters/", rast_name)))
-                                              return(readRDS(paste0("data_processed/rasters/", rast_name)))
-                                      # best when num. tiles is a small multiple of num. cores                                      
-                                      rast_split = splitRaster(rast_stack[[rast_name]], 4, 6, buffer=c(max(scales)/5,max(scales)/5))
-                                      smoothed_rast_split = foreach(rast_small=rast_split, .packages=c("velox","raster"),
-                                                                    .export=c("wt_list","scales")) %do% {
-                                              rast_small_not_NA = rast_small
-                                              rast_small_not_NA[] = 1 - is.na(rast_small[])
-                                              rast_small[is.na(rast_small[])] = 0 
-                                              # ^-- set NA to 0 so velox sum will work (tracking NAs in rast_small_not_NA)
-                                              rast_small_vel = velox(rast_small); rast_small_not_NA_vel = velox(rast_small_not_NA)                
-                                              #
-                                              out = lapply(scales, function(scale){
+                                        print(rast_name)
+                                        veg_rast = rast_stack[[rast_name]]
+                                        veg_rast_not_NA = veg_rast
+                                        veg_rast_not_NA[] = 1 - is.na(veg_rast[])
+                                        veg_rast[is.na(veg_rast[])] = 0 
+                                        # ^-- set NA to 0 so velox sum will work (tracking NAs in veg_rast_not_NA)
+                                        veg_rast_vel = velox(veg_rast); veg_rast_not_NA_vel = velox(veg_rast_not_NA)                
+                                        #
+                                        smoothed_rast_list = lapply(scales, function(scale){
                                                                    print(scale)                                     
-                                                                   r_sum = rast_small_vel$copy()
-                                                                   NA_sum = rast_small_not_NA_vel$copy()
+                                                                   r_sum = veg_rast_vel$copy()
+                                                                   NA_sum = veg_rast_not_NA_vel$copy()
                                                                    r_sum$sumFocal(weights=wt_list[[as.character(scale)]])
                                                                    NA_sum$sumFocal(weights=wt_list[[as.character(scale)]])
                                                                    out = r_sum$as.RasterStack()[[1]] / NA_sum$as.RasterStack()[[1]]
                                                                    names(out) = paste0(rast_name, "XX", scale)
                                                                    return(out)
-                                                                    })
-                                              return(out)
-                                      }
-                                      smoothed_rast_split = purrr::transpose(smoothed_rast_split)
-                                      out = stack(foreach(rast_list=smoothed_rast_split, .packages=c("raster", "SpaDES")) %do% {
-                                                          out = mergeRaster(rast_list)
-                                                          return(out)
-                                                                    })
-                                      saveRDS(out, paste0("data_processed/rasters/", rast_name))
-                                      return(out)
+                                        })
+                                        out = stack(smoothed_rast_list)
+                                        saveRDS(out, paste0("data_processed/rasters/", rast_name))
+                                        return(out)
                                 }))
 
 ######################################## map of predictors
 
-stack = readRDS("data_processed/microtopography/10")
+stack = readRDS("data_processed/microtopography/25")
 pred_mask = readRDS("data_processed/pred_mask.RDS")
 stack[pred_mask == 0] = NA
-names(elev_5) = "Elevation"
-res_5_joined = stack(veg_rasts, elev_5, stack)
+names(elev_25) = "Elevation"
+res_25_joined = stack(veg_rasts, elev_25, stack)
 
 rast_df = rast_df[rast_df$Group != "PC",] # plotted separately
 rast_df$Group_color = muted(c("blue","brown","green"))[factor(rast_df$Group)]
 
 plot_list = lapply(rast_df$Variable, function(var){
                            print(var)                           
-                           rast = res_5_joined[[var]]
+                           rast = res_25_joined[[var]]
                            rast_pts <- data.frame(rasterToPoints(rast))
                            colnames(rast_pts) <- c('x','y','value')
 
@@ -295,7 +282,7 @@ plot_list = lapply(rast_df$Variable, function(var){
                            }
                            p = ggplot(data=rast_pts,aes(x=x,y=y,fill=value)) +
                                    geom_raster() +
-                                   coord_equal(xlim=extent(res_5_joined)[1:2], ylim=extent(res_5_joined)[3:4]) +
+                                   coord_equal(xlim=extent(res_25_joined)[1:2], ylim=extent(res_25_joined)[3:4]) +
                                    geom_point(data=sites, aes(x=X,y=Y,fill=NULL), shape=20, size=0.75, stroke=0) +
                                    scale_fill_gradientn(colors=rev(brewer.pal(11,"RdYlBu")),
                                                         breaks=pretty_breaks(n=3),                                
@@ -324,7 +311,7 @@ dev.off()
 
 ######################################## site reduce
 
-names(elev_5) = "ElevationXX5"
+names(elev_25) = "ElevationXX25"
 
 micro_files = list.files("data_processed/microtopography")
 microtopo = stack(pblapply(micro_files, function(scale){
@@ -332,7 +319,7 @@ microtopo = stack(pblapply(micro_files, function(scale){
                                    names(stack) = paste0(names(stack), "XX", scale)
                                    return(stack)
                          }))
-topo = stack(microtopo, elev_5)
+topo = stack(microtopo, elev_25)
 veg_rasts_all = stack(veg_rasts,PC1,PC2) # alternatively, could use smoothed versions directly
 
 sites_buffer = st_buffer(sites_UTM_spatial, 500) # for cropping
@@ -340,15 +327,15 @@ sites_buffer = st_buffer(sites_UTM_spatial, 500) # for cropping
 rast_reduce = foreach(i = 1:nrow(sites_buffer), .combine="rbind") %do% {
         print(i)
         # veg reduce        
-        rast_crop_5 = crop(veg_rasts_all, sites_buffer[i,])
-        dist_rast_5 = distanceFromPoints(rast_crop_5, sites[i,c("X","Y")])
-        reduce_5 = t(sapply(seq(10,100,by=10), function(x){
-                apply(rast_crop_5[dist_rast_5 <= x], 2, function(x) mean(x,na.rm=TRUE))
+        rast_crop_25 = crop(veg_rasts_all, sites_buffer[i,])
+        dist_rast_25 = distanceFromPoints(rast_crop_25, sites[i,c("X","Y")])
+        reduce_25 = t(sapply(scales, function(x){
+                apply(rast_crop_25[dist_rast_25 <= x], 2, function(x) mean(x,na.rm=TRUE))
         }))
-        rownames(reduce_5) = seq(10,100,by=10)
-        reduce_5 = melt(reduce_5)
-        out_veg = data.frame(site=sites$LOCATION_CODE[i], scale=reduce_5$Var1, variable=reduce_5$Var2,
-                             value=reduce_5$value)
+        rownames(reduce_25) = scales
+        reduce_25 = melt(reduce_25)
+        out_veg = data.frame(site=sites$LOCATION_CODE[i], scale=reduce_25$Var1, variable=reduce_25$Var2,
+                             value=reduce_25$value)
         # topo reduce
         topo_crop = crop(topo, sites_buffer[i,])
         dist_rast_topo = distanceFromPoints(topo_crop, sites[i,c("X","Y")])
@@ -367,16 +354,16 @@ rast_reduce$scale = as.numeric(rast_reduce$scale)
 
 predictors = stack(smoothed_stack,
                    microtopo,
-                   elev_5)
+                   elev_25)
 
-saveRDS(predictors,"data_processed/predictors.RDS") # ~3 GB, 30 sec to read
+saveRDS(predictors,"data_processed/predictors.RDS")
 saveRDS(sites,"data_processed/sites.RDS")
 saveRDS(rast_reduce, "data_processed/rast_reduce.RDS")
 
 ############################## vegetation correlation matrix
 
-veg_data = rast_reduce[rast_reduce$scale == 10 & rast_reduce$variable %in% rast_df$Variable[rast_df$Group == "Vegetation"],]
-veg_data = spread(veg_data,"variable","value")[,-c(1,2)]
+veg_data = rast_reduce[rast_reduce$scale == 25 & rast_reduce$variable %in% rast_df$Variable[rast_df$Group == "Vegetation"],]
+veg_data = tidyr::spread(veg_data,"variable","value")[,-c(1,2)]
 veg_data = na.omit(veg_data)
 
 veg_cor = mat.sort(cor(veg_data, method="spearman"))

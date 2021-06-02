@@ -16,15 +16,18 @@ pacman::p_load(cowplot,
                raster,
                RColorBrewer,
                readxl,
+               psych,
                reshape2,
                rgdal,
                scales,
                sf,
                sp,
                stringr,
+               SpaDES,
                stringi,
                tidyr,
                tidyverse,
+               ggrepel,
                vegan,
                R.devices)
 
@@ -41,6 +44,6 @@ start = Sys.time()
 source("scripts/utility_functions.R")
 source("scripts/001 - raster setup.R")
 source("scripts/002 - set up temperature.R")
-source("scripts - Andrews2/003 - spatial prediction.R")
+source("scripts/003 - spatial prediction.R")
 Sys.time() - start
 

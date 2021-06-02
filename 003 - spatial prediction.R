@@ -3,7 +3,7 @@
 rast_reduce = readRDS("data_processed/rast_reduce.RDS")
 rast_reduce = rast_reduce[! rast_reduce$variable %in% c("PC1","PC2"),] # not using PC vars for main models
 rast_reduce$var_scale = paste0(rast_reduce$variable, "XX", rast_reduce$scale)
-rast_spread = spread(rast_reduce[,c("site","var_scale","value"),],key="var_scale",value="value")
+rast_spread = tidyr::spread(rast_reduce[,c("site","var_scale","value"),],key="var_scale",value="value")
 
 temp_merged = readRDS("data_processed/temperature_metrics.RDS")
 temp_merged$site_year = paste(temp_merged$LOCATION_CODE, temp_merged$Year)
@@ -46,7 +46,7 @@ pred_rast_list = foreach(var=sort(unique(data$variable))) %do% {  # startup is s
 
 pred_rast_stack = stack(pred_rast_list)
 names(pred_rast_stack) = sort(unique(data$variable))
-writeRaster(pred_rast_stack, filename=paste0("output/",names(pred_rast_stack)), bylayer=TRUE,format="GTiff")
+writeRaster(pred_rast_stack, filename=paste0("output/",names(pred_rast_stack)), bylayer=TRUE,format="GTiff", overwrite=TRUE)
 
 ############################## plot prediction rasters
 
