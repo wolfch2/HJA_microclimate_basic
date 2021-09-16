@@ -16,7 +16,7 @@ Where the R scripts in this repository should be placed in the "scripts" folder 
 4. rasters listed in "HJA variables\_final.xlsx" [see HJA data webpage]
 5. harvest, hjaveg8, shapefiles [for PC1/PC2 only; see HJA data webpage, I think]
 
-Before running the code, you will need to set the project directory in "runner.R". To obtain predictions for specific year(s), you can change the "years" variable in this script. Note that memory use peaks at ~5.5 GB and runtime is approximately 3.1 minutes (on my desktop computer).
+Before running the code, you will need to set the project directory in "runner.R". To obtain predictions for specific year(s), you can change the "years" variable in this script. Note that memory use peaks at ~5.5 GB and runtime is approximately 3.5 minutes (on my desktop computer). Optionally, you can change the "framework" variable from "lightgbm" to "xgboost" to use the xgboost gradient boosting framework instead of lightgbm.
 
 The output of the code, which can be obtained by executing "runner.R", is a set of predicted temperature rasters (with a paneled figure) corresponding to the temperature metrics in Wolf et al. (2021), Frey et al. (2016), and mean min/mean/max daily temperature for each month. All relevant methods (e.g., raster processing) are described in Wolf et al. (2021) with three differences:
 
@@ -28,6 +28,6 @@ If you want to model other temperature metrics, you can add them to the "T\_cust
 
 References:
 
-Christopher Wolf, David M. Bell, Hankyu Kim, Michael Paul Nelson, Mark Schulze, and Matthew G. Betts. Temporal consistency of undercanopy thermal refugia in old-growth forest. *Agricultural and Forest Meteorology*, In Review.
+Christopher Wolf, David M. Bell, Hankyu Kim, Michael Paul Nelson, Mark Schulze, and Matthew G. Betts. Temporal consistency of undercanopy thermal refugia in old-growth forest. *Agricultural and Forest Meteorology* 307 (2021): 108520.
 
 Frey, Sarah JK, et al. "Spatial models reveal the microclimatic buffering capacity of old-growth forests." *Science advances* 2.4 (2016): e1501392.

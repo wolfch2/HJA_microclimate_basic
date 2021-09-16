@@ -8,6 +8,7 @@ pacman::p_load(cowplot,
                grid,
                gridExtra,
                lightgbm,
+               xgboost,
                lubridate,
                MASS,
                pbapply,
@@ -34,7 +35,8 @@ pacman::p_load(cowplot,
 p_load_gh("hunzikp/velox")
 
 setwd("/mnt/shared/analysis/Andrews_simpleGBM/") # set to project directory
-years = "All" # can change to year(s) -- for example, "2013" or "c(2013, 2017)" or "2013:2015"
+years = "All" # can change to year(s) -- for example, 2013 or c(2013, 2017) or 2013:2015
+framework = "lightgbm" # for gradient boosting: either "lightgbm" or "xgboost"
 
 dir.create("data_processed")
 dir.create("output")

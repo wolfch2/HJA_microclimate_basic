@@ -71,15 +71,24 @@ T_custom_metrics = function(sitedata, prop_obs = 0.8){ # see StreamThermal packa
                 out[,paste0("m_",m,"_mean")] = missing_mean(sitedata$MeanT[sitedata$Month %in% m],sum(monthdays(m,y)),prop_obs)
                 out[,paste0("m_",m,"_max")] = missing_mean(sitedata$MaxT[sitedata$Month %in% m],sum(monthdays(m,y)),prop_obs)
         }
-        out = data.frame(out, # add Sarah variables
+        out = data.frame(out, # add (1) Sarah variables and (2) winter/summer/fall min/mean/max
                          CDD_0_1_3 = ifelse(sum(sitedata$Month %in% 1:3) == sum(monthdays(1:3,y)), sum(pmax((sitedata$MaxT + sitedata$MinT)/2 - 0, 0)[sitedata$Month <= 3]), NA),
                          CDD_0_4_6 = ifelse(sum(sitedata$Month %in% 4:6) == sum(monthdays(4:6,y)), sum(pmax((sitedata$MaxT + sitedata$MinT)/2 - 0, 0)[sitedata$Month %in% 4:6]), NA),
                          CDD_10_4_6 = ifelse(sum(sitedata$Month %in% 4:6) == sum(monthdays(4:6,y)), sum(pmax((sitedata$MaxT + sitedata$MinT)/2 - 10, 0)[sitedata$Month %in% 4:6]), NA),
                          SD_1_3 = weekly_sd(sitedata, 1, 3),
                          SD_4_6 = weekly_sd(sitedata, 4, 6),
-                         mean_4_6 = missing_mean(sitedata$MeanT[sitedata$Month %in% 4:6],sum(monthdays(4:6,y)),prop_obs=1),
-                         max_4_6 = missing_mean(sitedata$MaxT[sitedata$Month %in% 4:6],sum(monthdays(4:6,y)),prop_obs=1),
-                         min_4_6 = missing_mean(sitedata$MinT[sitedata$Month %in% 4:6],sum(monthdays(4:6,y)),prop_obs=1),
+                         min_1_3 = missing_mean(sitedata$MinT[sitedata$Month %in% 1:3],sum(monthdays(1:3,y)),prop_obs=1), # WINTER MIN
+                         mean_1_3 = missing_mean(sitedata$MeanT[sitedata$Month %in% 1:3],sum(monthdays(1:3,y)),prop_obs=1), # WINTER MEAN
+                         max_1_3 = missing_mean(sitedata$MaxT[sitedata$Month %in% 1:3],sum(monthdays(1:3,y)),prop_obs=1), # WINTER MAX
+                         min_4_6 = missing_mean(sitedata$MinT[sitedata$Month %in% 4:6],sum(monthdays(4:6,y)),prop_obs=1), # SPRING MIN
+                         mean_4_6 = missing_mean(sitedata$MeanT[sitedata$Month %in% 4:6],sum(monthdays(4:6,y)),prop_obs=1), # SPRING MEAN
+                         max_4_6 = missing_mean(sitedata$MaxT[sitedata$Month %in% 4:6],sum(monthdays(4:6,y)),prop_obs=1), # SPRING MAX
+                         min_6_9 = missing_mean(sitedata$MinT[sitedata$Month %in% 6:9],sum(monthdays(6:9,y)),prop_obs=1), # SUMMER MIN
+                         mean_6_9 = missing_mean(sitedata$MeanT[sitedata$Month %in% 6:9],sum(monthdays(6:9,y)),prop_obs=1), # SUMMER MEAN
+                         max_6_9 = missing_mean(sitedata$MaxT[sitedata$Month %in% 6:9],sum(monthdays(6:9,y)),prop_obs=1), # SUMMER MAX
+                         min_10_12 = missing_mean(sitedata$MinT[sitedata$Month %in% 10:12],sum(monthdays(10:12,y)),prop_obs=1), # WINTER MIN
+                         mean_10_12 = missing_mean(sitedata$MeanT[sitedata$Month %in% 10:12],sum(monthdays(10:12,y)),prop_obs=1), # WINTER MEAN
+                         max_10_12 = missing_mean(sitedata$MaxT[sitedata$Month %in% 10:12],sum(monthdays(10:12,y)),prop_obs=1), # WINTER MAX
                          max_warmest = max(monthly_summaries(sitedata, "MaxT")),
                          min_coldest =min(monthly_summaries(sitedata, "MinT"))
         )
