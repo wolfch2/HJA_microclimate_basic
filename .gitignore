@@ -1,3 +1,4 @@
-# ignore hidden files
+# ignore hidden files/dirs
 .*
+.vscode/*
 !/.gitignore
