@@ -86,9 +86,9 @@ T_custom_metrics = function(sitedata, prop_obs = 0.8){ # see StreamThermal packa
                          min_6_9 = missing_mean(sitedata$MinT[sitedata$Month %in% 6:9],sum(monthdays(6:9,y)),prop_obs=1), # SUMMER MIN
                          mean_6_9 = missing_mean(sitedata$MeanT[sitedata$Month %in% 6:9],sum(monthdays(6:9,y)),prop_obs=1), # SUMMER MEAN
                          max_6_9 = missing_mean(sitedata$MaxT[sitedata$Month %in% 6:9],sum(monthdays(6:9,y)),prop_obs=1), # SUMMER MAX
-                         min_10_12 = missing_mean(sitedata$MinT[sitedata$Month %in% 10:12],sum(monthdays(10:12,y)),prop_obs=1), # WINTER MIN
-                         mean_10_12 = missing_mean(sitedata$MeanT[sitedata$Month %in% 10:12],sum(monthdays(10:12,y)),prop_obs=1), # WINTER MEAN
-                         max_10_12 = missing_mean(sitedata$MaxT[sitedata$Month %in% 10:12],sum(monthdays(10:12,y)),prop_obs=1), # WINTER MAX
+                         min_10_12 = missing_mean(sitedata$MinT[sitedata$Month %in% 10:12],sum(monthdays(10:12,y)),prop_obs=1), # FALL MIN
+                         mean_10_12 = missing_mean(sitedata$MeanT[sitedata$Month %in% 10:12],sum(monthdays(10:12,y)),prop_obs=1), # FALL MEAN
+                         max_10_12 = missing_mean(sitedata$MaxT[sitedata$Month %in% 10:12],sum(monthdays(10:12,y)),prop_obs=1), # FALL MAX
                          max_warmest = max(monthly_summaries(sitedata, "MaxT")),
                          min_coldest =min(monthly_summaries(sitedata, "MinT"))
         )
