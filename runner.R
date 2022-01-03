@@ -35,8 +35,10 @@ pacman::p_load(cowplot,
 p_load_gh("hunzikp/velox")
 
 setwd("/mnt/shared/analysis/Andrews_simpleGBM/") # set to project directory
-years = "All" # can change to year(s) -- for example, 2013 or c(2013, 2017) or 2013:2015
-framework = "lightgbm" # for gradient boosting: either "lightgbm" or "xgboost"
+
+predict_by_year = TRUE # if TRUE, generate separate prediction rasters for each year
+years = 2009:2018 # select year(s) -- for example, 2013 or c(2013, 2017) or 2013:2015
+framework = "xgboost" # for gradient boosting: either "lightgbm" or "xgboost"
 
 dir.create("data_processed")
 dir.create("output")
@@ -46,6 +48,17 @@ start = Sys.time()
 source("scripts/utility_functions.R")
 source("scripts/001 - raster setup.R")
 source("scripts/002 - set up temperature.R")
-source("scripts/003 - spatial prediction.R")
+if(predict_by_year){ # to obtain separate predictions for each year
+    for(year in years){
+        print(year)
+        year_prefix = paste0(year, "/", year, " ")
+        dir.create(paste0("output/", year))
+        source("scripts/003 - spatial prediction.R")
+    }
+}
+else{
+    year_prefix = ""
+    source("scripts/003 - spatial prediction.R")
+}
 Sys.time() - start
 

@@ -7,8 +7,10 @@ rast_spread = tidyr::spread(rast_reduce[,c("site","var_scale","value"),],key="va
 
 temp_merged = readRDS("data_processed/temperature_metrics.RDS")
 temp_merged$site_year = paste(temp_merged$LOCATION_CODE, temp_merged$Year)
-if(years != "All"){
-        temp_merged = temp_merged[temp_merged$Year %in% years,]
+if(! predict_by_year){
+        temp_merged = temp_merged[temp_merged$Year %in% years,] # just select all years
+} else{
+        temp_merged = temp_merged[temp_merged$Year %in% year,] # select only year being considered
 }
 
 data = merge(temp_merged, rast_spread, by="site")
@@ -56,7 +58,7 @@ pred_rast_list = foreach(var=sort(unique(data$variable))) %do% {  # startup is s
 
 pred_rast_stack = stack(pred_rast_list)
 names(pred_rast_stack) = sort(unique(data$variable))
-writeRaster(pred_rast_stack, filename=paste0("output/",names(pred_rast_stack)), bylayer=TRUE,format="GTiff", overwrite=TRUE)
+writeRaster(pred_rast_stack, filename=paste0("output/", year_prefix, names(pred_rast_stack)), bylayer=TRUE,format="GTiff", overwrite=TRUE)
 
 ############################## plot prediction rasters
 
@@ -105,6 +107,6 @@ plot_list = lapply(names(pred_rast_stack), function(var){
 
 pred_plot = plot_grid(plotlist=plot_list, nrow=7)
 
-png("output/pred_map_all.png", width=13, height=11, units="in", res=200)
+png(paste0("output/", year_prefix, "pred_map_all.png"), width=13, height=11, units="in", res=200)
 plot(pred_plot)
 dev.off()
